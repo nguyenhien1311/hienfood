@@ -12,6 +12,7 @@ import com.hien.food.repository.IngredientRepository;
 import com.hien.food.repository.RecipeDetailRepository;
 import com.hien.food.repository.RecipeRepository;
 import com.hien.food.request.recipe.CreateRecipeRequest;
+import com.hien.food.request.recipe.RecipeDetailParam;
 import com.hien.food.request.recipe.UpdateRecipeRequest;
 import com.hien.food.response.recipe.ListRecipeResponse;
 import com.hien.food.service.CategoryService;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,18 +49,14 @@ public class RecipeServiceImpl implements RecipeService {
   public void createRecipe(CreateRecipeRequest request) {
     Recipe recipe = new Recipe();
     BeanUtils.copyProperties(request, recipe);
-    Category category = categoryService.getEntity(request.categoryId());
-    recipe.setCategory(category);
-    recipeRepository.save(recipe);
+    handleSaving(recipe, request.categoryId(), request.ingredients());
   }
 
   @Override
   public void updateRecipe(String id, UpdateRecipeRequest request) {
     Recipe recipe = getEntity(id);
     BeanUtils.copyProperties(request, recipe);
-    Category category = categoryService.getEntity(request.categoryId());
-    recipe.setCategory(category);
-    recipeRepository.save(recipe);
+    handleSaving(recipe, request.categoryId(), request.ingredients());
   }
 
   @Override
@@ -91,6 +89,26 @@ public class RecipeServiceImpl implements RecipeService {
 
     detailDto.setIngredients(listIngredientDto);
     return detailDto;
+  }
+
+
+  private void handleSaving(Recipe recipe, String categoryId, List<RecipeDetailParam> ingredients) {
+    List<RecipeDetail> details = new ArrayList<>();
+    Category category = categoryService.getEntity(categoryId);
+    recipe.setCategory(category);
+    Recipe savedRecipe = recipeRepository.save(recipe);
+    if (!ingredients.isEmpty()) {
+      ingredients.forEach(recipeDetail -> {
+        Ingredient ingredient = ingredientRepository.getIngredientById(recipeDetail.ingredientId());
+        RecipeDetail detail = new RecipeDetail();
+        detail.setIngredient(ingredient);
+        detail.setAmount(recipeDetail.amount());
+        detail.setRecipe(savedRecipe);
+        details.add(detail);
+      });
+      recipeDetailRepository.deleteAllByRecipe(savedRecipe);
+      recipeDetailRepository.saveAll(details);
+    }
   }
 
 }
