@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -21,10 +20,10 @@ public class IngredientDTO implements Serializable {
 
   private String image;
 
+  private Integer amount;
+
   private String unit;
 
   private TypeDTO ingredientType;
-
-  private List<RecipeDetailDTO> detail;
 
 }

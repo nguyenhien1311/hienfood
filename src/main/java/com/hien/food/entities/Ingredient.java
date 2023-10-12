@@ -1,5 +1,6 @@
 package com.hien.food.entities;
 
+import com.hien.food.dto.IngredientDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -39,5 +40,13 @@ public class Ingredient implements Serializable {
 
   @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL)
   private List<RecipeDetail> detail;
+
+  public IngredientDTO transformToDTO() {
+    return IngredientDTO.builder()
+        .id(this.id)
+        .name(this.name)
+        .unit(this.unit)
+        .build();
+  }
 
 }

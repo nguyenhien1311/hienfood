@@ -1,13 +1,23 @@
 package com.hien.food.service.impl;
 
 import com.hien.food.constant.ResponseConstant;
+import com.hien.food.dto.IngredientDTO;
 import com.hien.food.dto.RecipeDTO;
+import com.hien.food.dto.RecipeDetailDTO;
+import com.hien.food.entities.Category;
+import com.hien.food.entities.Ingredient;
 import com.hien.food.entities.Recipe;
+import com.hien.food.entities.RecipeDetail;
+import com.hien.food.repository.IngredientRepository;
+import com.hien.food.repository.RecipeDetailRepository;
 import com.hien.food.repository.RecipeRepository;
 import com.hien.food.request.recipe.CreateRecipeRequest;
 import com.hien.food.request.recipe.UpdateRecipeRequest;
 import com.hien.food.response.recipe.ListRecipeResponse;
+import com.hien.food.service.CategoryService;
 import com.hien.food.service.RecipeService;
+import com.hien.food.util.IngredientMapper;
+import com.hien.food.util.RecipeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -19,13 +29,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RecipeServiceImpl implements RecipeService {
 
+  private final RecipeDetailRepository recipeDetailRepository;
+
+  private final IngredientRepository ingredientRepository;
+
   private final RecipeRepository recipeRepository;
+
+  private final CategoryService categoryService;
 
   @Override
   public ListRecipeResponse getAll() {
-    List<RecipeDTO> data = recipeRepository.findAll().stream().map(
-        recipe -> RecipeDTO.builder().id(recipe.getId()).name(recipe.getName())
-            .image(recipe.getImage()).description(recipe.getDescription()).build()).toList();
+    List<RecipeDTO> data = recipeRepository.findAll().stream().map(RecipeMapper::toDto).toList();
     return ListRecipeResponse.builder().data(data).build();
   }
 
@@ -33,25 +47,50 @@ public class RecipeServiceImpl implements RecipeService {
   public void createRecipe(CreateRecipeRequest request) {
     Recipe recipe = new Recipe();
     BeanUtils.copyProperties(request, recipe);
+    Category category = categoryService.getEntity(request.categoryId());
+    recipe.setCategory(category);
     recipeRepository.save(recipe);
   }
 
   @Override
   public void updateRecipe(String id, UpdateRecipeRequest request) {
-    Recipe recipe = findOne(id);
+    Recipe recipe = getEntity(id);
     BeanUtils.copyProperties(request, recipe);
+    Category category = categoryService.getEntity(request.categoryId());
+    recipe.setCategory(category);
     recipeRepository.save(recipe);
   }
 
   @Override
   public void deleteRecipe(String id) {
-    Recipe recipe = findOne(id);
+    Recipe recipe = getEntity(id);
     recipeRepository.delete(recipe);
   }
 
-  private Recipe findOne(String id) {
+  @Override
+  public Recipe getEntity(String id) {
     return recipeRepository.findById(UUID.fromString(id))
         .orElseThrow(() -> new RuntimeException(ResponseConstant.RECIPE_NOT_FOUND));
+  }
+
+  @Override
+  public RecipeDetailDTO getDto(String id) {
+    Recipe entity = getEntity(id);
+
+    RecipeDetailDTO detailDto = RecipeMapper.toDetailDto(entity);
+
+    List<RecipeDetail> listIngredient =
+        recipeDetailRepository.getAllByRecipeId(entity.getId().toString());
+    List<IngredientDTO> listIngredientDto = listIngredient.stream().map(recipeDetail -> {
+      Ingredient ingredient =
+          ingredientRepository.getIngredientById(recipeDetail.getIngredient().getId().toString());
+      IngredientDTO dto = IngredientMapper.toDTO(ingredient);
+      dto.setAmount(recipeDetail.getAmount());
+      return dto;
+    }).toList();
+
+    detailDto.setIngredients(listIngredientDto);
+    return detailDto;
   }
 
 }

@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -24,7 +23,5 @@ public class RecipeDTO implements Serializable {
   private String description;
 
   private CategoryDTO category;
-
-  private List<RecipeDetailDTO> detail;
 
 }

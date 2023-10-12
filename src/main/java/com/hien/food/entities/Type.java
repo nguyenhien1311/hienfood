@@ -1,5 +1,6 @@
 package com.hien.food.entities;
 
+import com.hien.food.dto.TypeDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,5 +33,12 @@ public class Type implements Serializable {
 
   @OneToMany(mappedBy = "ingredientType", cascade = CascadeType.ALL)
   private List<Ingredient> ingredients;
+
+  public TypeDTO transformToDTO() {
+    return TypeDTO.builder()
+        .id(this.id)
+        .name(this.name)
+        .build();
+  }
 
 }

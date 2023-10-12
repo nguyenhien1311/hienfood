@@ -9,6 +9,7 @@ import com.hien.food.request.type.CreateTypeRequest;
 import com.hien.food.request.type.UpdateTypeRequest;
 import com.hien.food.response.type.ListTypeResponse;
 import com.hien.food.service.TypeService;
+import com.hien.food.util.TypeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,7 @@ public class TypeServiceImpl implements TypeService {
 
   @Override
   public ListTypeResponse getAll() {
-    List<TypeDTO> data = typeRepository.findAll().stream().map(
-        type -> TypeDTO.builder().id(type.getId()).name(type.getName()).image(type.getImage())
-            .build()).toList();
+    List<TypeDTO> data = typeRepository.findAll().stream().map(TypeMapper::toDTO).toList();
     return ListTypeResponse.builder().data(data).build();
   }
 
@@ -39,20 +38,26 @@ public class TypeServiceImpl implements TypeService {
 
   @Override
   public void updateType(String id, UpdateTypeRequest request) {
-    Type type = findOne(id);
+    Type type = getEntity(id);
     BeanUtils.copyProperties(request, type);
     typeRepository.save(type);
   }
 
   @Override
   public void deleteType(String id) {
-    Type type = findOne(id);
+    Type type = getEntity(id);
     typeRepository.delete(type);
   }
 
-  private Type findOne(String id) {
+  @Override
+  public Type getEntity(String id) {
     return typeRepository.findById(UUID.fromString(id))
         .orElseThrow(() -> new BusinessException(ResponseConstant.TYPE_NOT_FOUND));
+  }
+
+  @Override
+  public TypeDTO getDTO(String id) {
+    return getEntity(id).transformToDTO();
   }
 
 }

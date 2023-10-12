@@ -9,6 +9,7 @@ import com.hien.food.request.category.CreateCategoryRequest;
 import com.hien.food.request.category.UpdateCategoryRequest;
 import com.hien.food.response.category.ListCategoryResponse;
 import com.hien.food.service.CategoryService;
+import com.hien.food.util.CategoryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,8 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   public ListCategoryResponse getAll() {
-    List<CategoryDTO> data = categoryRepository.findAll().stream().map(
-        category -> CategoryDTO.builder().id(category.getId()).name(category.getName())
-            .image(category.getImage()).build()).toList();
+    List<CategoryDTO> data =
+        categoryRepository.findAll().stream().map(CategoryMapper::toDto).toList();
     return ListCategoryResponse.builder().data(data).build();
   }
 
@@ -39,19 +39,26 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   public void updateCategory(String id, UpdateCategoryRequest request) {
-    Category category = findOne(id);
+    Category category = getEntity(id);
     BeanUtils.copyProperties(request, category);
     categoryRepository.save(category);
   }
 
   @Override
   public void deleteCategory(String id) {
-    Category category = findOne(id);
+    Category category = getEntity(id);
     categoryRepository.delete(category);
   }
 
-  private Category findOne(String id) {
+  @Override
+  public Category getEntity(String id) {
     return categoryRepository.findById(UUID.fromString(id))
         .orElseThrow(() -> new BusinessException(ResponseConstant.CATEGORY_NOT_FOUND));
   }
+
+  @Override
+  public CategoryDTO getDto(String id) {
+    return getEntity(id).transformToDto();
+  }
+
 }
