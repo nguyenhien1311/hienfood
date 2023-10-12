@@ -6,8 +6,8 @@ import com.hien.food.response.RootResponse;
 
 public class BaseController {
 
-  public RootResponse success() {
-    return new RootResponse();
+  public RootResponse success(String message) {
+    return RootResponse.builder().code(ResponseConstant.SUCCESS).message(message).build();
   }
 
   public RootResponse success(ResponseBody responseBody) {

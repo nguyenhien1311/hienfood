@@ -1,26 +1,43 @@
 package com.hien.food.controller;
 
-import com.hien.food.entities.Type;
-import com.hien.food.repository.TypeRepository;
+import com.hien.food.constant.ResponseConstant;
+import com.hien.food.request.type.CreateTypeRequest;
+import com.hien.food.request.type.UpdateTypeRequest;
+import com.hien.food.response.RootResponse;
+import com.hien.food.response.type.ListTypeResponse;
+import com.hien.food.service.TypeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/type")
+@RequestMapping("/api/v1/types")
 public class TypesController extends BaseController {
 
-  private final TypeRepository typeRepository;
+  private final TypeService service;
 
   @GetMapping
-  public List<Type> getAll() {
-    List<Type> all = typeRepository.findAll();
-    return all;
+  public RootResponse getAll() {
+    ListTypeResponse response = service.getAll();
+    return success(response);
   }
 
+  @PostMapping
+  public RootResponse addType(@ModelAttribute CreateTypeRequest request) {
+    service.createType(request);
+    return success(ResponseConstant.TYPE_CREATE_OK);
+  }
+
+  @PutMapping("/{id}")
+  public RootResponse editType(@PathVariable String id, @ModelAttribute UpdateTypeRequest request) {
+    service.updateType(id, request);
+    return success(ResponseConstant.TYPE_UPDATE_OK);
+  }
+
+  @DeleteMapping("/{id}")
+  public RootResponse deleteType(@PathVariable String id) {
+    service.deleteType(id);
+    return success(ResponseConstant.TYPE_DELETE_OK);
+  }
 
 }
